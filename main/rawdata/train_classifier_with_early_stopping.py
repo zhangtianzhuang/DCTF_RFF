@@ -5,12 +5,11 @@ from torch.utils.data import DataLoader
 from torch.autograd import Variable
 from torch import optim
 import os
-from MyDataset import MyDataset
+from dataset import MyDataset, RawWiFiDataset
 import util
 import matplotlib.pyplot as plt
 from common_config import *
 import random
-
 
 Model = common_config_model
 max_epoch = 120
@@ -34,7 +33,6 @@ test_snr = common_config_test_snr
 snr_name_train = util.buildSNR(snr)
 snr_name_test = util.buildSNR(test_snr)
 c_name = util.buildC(device_count)
-diff_channel = common_config_diff_channel
 
 
 def save_weights(epoch, filename):
@@ -69,11 +67,13 @@ def train():
         train_total = 0
         for i, data in enumerate(train_loader, 0):
             inputs, train_labels = data
+            inputs = inputs.type(torch.FloatTensor)
+            train_labels = train_labels.type(torch.LongTensor)
             inputs, labels = Variable(inputs), Variable(train_labels)
             inputs, labels = inputs.cuda(), labels.cuda()
             optimizer.zero_grad()  # 将梯度初始化为零
             outputs = net(inputs)
-            _, train_predicted = torch.max(outputs.detach(), 1)
+            _, train_predicted = torch.max(outputs.data, 1)
             # 第二个返回值是找到最大值的索引位置(此处是0,1)
             train_correct += (train_predicted == labels.data).sum()
             train_total += train_labels.size(0)
@@ -98,13 +98,13 @@ def train():
         test_correct = 0
         test_total = 0
         test_batch_number = len(test_loader)
-        # selected_batch_number = 32 if test_batch_number > 32 else test_batch_number
         selected_batch_number = test_batch_number
-        start = random.randrange(0, test_batch_number-selected_batch_number+1)
+        start = random.randrange(0, test_batch_number - selected_batch_number + 1)
         for i, data in enumerate(test_loader, start):
             if i >= start + selected_batch_number:
                 break
             inputs, test_labels = data
+            inputs = inputs.type(torch.FloatTensor)
             inputs, labels = Variable(inputs), Variable(test_labels)
             inputs = inputs.cuda()
             labels = labels.cuda()
@@ -164,23 +164,19 @@ if __name__ == "__main__":
               + '_' + util.buildP(testP, 'TE') + '_TE' + util.buildSNR(test_snr) \
               + '_EP' + epochs_name \
               + '_LR' + util.buildLR(lr)
-    print('Model name is', para)
-    print('Train filename', train_set_file)
-    print('Test filename', test_set_file)
-    print('CM Name', cm_name)
-    # 第一步：数据加载与处理,选择训练设备cpu/gpu
     device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-    print("是否使用GPU加速：", torch.cuda.is_available())
-    train_data = MyDataset(txt=train_set_file, type='train', device_count=device_count,
-                           transform=transforms.Compose([transforms.CenterCrop(64),
-                                                         transforms.ToTensor()]))
-    # 此处的shuffle只是在一个小批次内进行打乱
+
+    train_file = '/mnt/DiskA-1.7T/ztz/Output/DCTF_RFF/class/ClearedDataset-1-RawSlice/TR-P-1-2_A-no_S-5-10-15-20-25-30-no_L10-128.txt'
+    train_file_list = util.read_list_from_file(train_file)
+    print(train_file_list)
+    train_data = RawWiFiDataset(mat_file= train_file_list, shuffle=True)
+    train_data.print_dataset_info()
+
+    test_file = '/mnt/DiskA-1.7T/ztz/Output/DCTF_RFF/class/ClearedDataset-1-RawSlice/TE-P-1-2_A-no_S-5-10-15-20-25-30-no_L10-128.txt'
+    test_file_list = util.read_list_from_file(test_file)
+    print(test_file_list)
+    test_data = RawWiFiDataset(mat_file=test_file_list)
+    test_data.print_dataset_info()
     train_loader = DataLoader(train_data, batch_size=batch_size, num_workers=2, shuffle=True)
-    test_data = MyDataset(txt=test_set_file, type='test', device_count=device_count, shuffle=True,
-                          transform=transforms.Compose([transforms.CenterCrop(64),
-                                                        transforms.ToTensor()]))
-    test_loader = DataLoader(test_data, batch_size=batch_size, num_workers=2,
-                             shuffle=False, pin_memory=True)
-    print('create data_loader successfully!')
-    print('parameters:', '\ndata_type:', train_common, '\nbatch_size:', batch_size)
+    test_loader = DataLoader(test_data, batch_size=batch_size, num_workers=2, shuffle=False)
     train()

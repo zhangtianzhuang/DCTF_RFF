@@ -1,9 +1,0 @@
-function confidenceInterval calculate_confidence_inteval(samples, z)
-    % 90%, z = 1.645
-    % 95%, z = 1.96
-    % 99%, z = 2.58
-    [rowNum, colNum] = size(samples);
-    confidenceInterval = zeros(2, colNum);
-    n = rowNum;
-    s = std(samples);
-end

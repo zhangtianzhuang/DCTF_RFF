@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from torch.autograd import Variable
 from torch import optim
 import os
-from MyDataset import MyDataset
+from dataset import MyDataset
 import util
 import matplotlib.pyplot as plt
 from torchvision.datasets import cifar

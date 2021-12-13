@@ -51,23 +51,37 @@ class MyDataset(Dataset):
 
 
 class RawWiFiDataset(Dataset):
-    def __init__(self, mat_file, shuffle=True):
+    def __init__(self, mat_file, shuffle=False):
         data = []
-        mat_data = scio.loadmat(mat_file)
-        waveform = mat_data['Store_Waveform']
-        label = mat_data['Store_Frame_Label']
-        # 遍历waveform的每一行，将数据转化为numpy.ndarray，标签存储到data中
-        row, col = waveform.shape
-        for i in range(0, row):
-            line = waveform[i, :]
-            real_part, imag_part = line.real.reshape(1, col), line.imag.reshape(1, col)
-            tensor_data = np.stack((real_part, imag_part))  # 数据
-            device_id = label[i, 0]  # 标签
-            data.append((tensor_data, device_id))
-        # 如有需要，将数据集打乱
+        device_info = dict()
+        # 先判断mat_file是str还是[]list
+        file_list = []
+        if type(mat_file) == str:
+            file_list.append(mat_file)
+        elif type(mat_file) == list:
+            file_list = mat_file
+        for device_file in file_list:
+            mat_data = scio.loadmat(device_file)
+            waveform = mat_data['Store_Waveform']
+            label = mat_data['Store_Frame_Label']
+            # 遍历waveform的每一行，将数据转化为numpy.ndarray，标签存储到data中
+            row, col = waveform.shape
+            for i in range(0, row):
+                line = waveform[i, :]
+                real_part, imag_part = line.real.reshape(1, col), line.imag.reshape(1, col)
+                tensor_data = np.stack((real_part, imag_part))  # 数据
+                device_id = label[i, 0]  # 标签
+                data.append((tensor_data, device_id - 1))  # 因为CNN类标必须从0开始，所以device_id - 1
+                if device_id in device_info.keys():
+                    device_info[device_id] = device_info[device_id] + 1
+                else:
+                    device_info[device_id] = 1
+
         if shuffle:
             random.shuffle(data)
         self.data = data
+        self.mat_file = mat_file
+        self.device_info = device_info
 
     def __getitem__(self, index):
         waveform, label = self.data[index]
@@ -75,6 +89,10 @@ class RawWiFiDataset(Dataset):
 
     def __len__(self):
         return len(self.data)
+
+    def print_dataset_info(self):
+        print('[dataset: %s] total samples: %d, device info: %s'
+              % (self.mat_file, self.__len__(), self.device_info))
 
 
 if __name__ == '__main__':
@@ -105,12 +123,13 @@ if __name__ == '__main__':
     # print(c.shape)
 
     # 测试RawWiFiDataset
-    train_data = RawWiFiDataset(mat_file='/mnt/DiskA-1.7T/ztz/test/P1-Slice.mat',
-                                   shuffle=False)
-    train_loader = DataLoader(train_data, batch_size=2, num_workers=2, shuffle=True)
-    for i, data in enumerate(train_loader, 0):
-        wave, label = data
-        print('wave', wave)
-        print('wave shape is', wave.shape)
-        print('label', label)
-        break
+    # train_data = RawWiFiDataset(mat_file='/mnt/DiskA-1.7T/ztz/test/P1-Slice.mat',
+    #                                shuffle=False)
+    # train_loader = DataLoader(train_data, batch_size=2, num_workers=2, shuffle=True)
+    # for i, data in enumerate(train_loader, 0):
+    #     wave, label = data
+    #     print('wave', wave)
+    #     print('wave shape is', wave.shape)
+    #     print('label', label)
+    #     break
+    pass

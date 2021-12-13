@@ -1,14 +1,12 @@
 import numpy as np
 import torch
-from torchvision import transforms
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
 import os
-from MyDataset import MyDataset
+from dataset import MyDataset, RawWiFiDataset
 import util
 from common_config import *
 import matplotlib.pyplot as plt
-
 
 Model = common_config_model  # net model
 epochs = 120
@@ -53,6 +51,7 @@ def test(para):
     err_pos = []
     for i, data in enumerate(test_loader, 0):
         inputs, test_labels = data
+        inputs = inputs.type(torch.FloatTensor)
         inputs, labels = Variable(inputs), Variable(test_labels)
         inputs = inputs.cuda()
         labels = labels.cuda()
@@ -93,25 +92,20 @@ if __name__ == "__main__":
         train_common = train_data_set_type + '_' + util.buildP(P, 'TR') + '_' + c_name + '_' + snr_name_train
         # 训练后的模型参数命名
         para = build_para_name()
-        txt_dir = OUTPUT_DIR + '/class' + '/' + test_data_set_type + '/'
-        train_set_file = txt_dir + train_common + '.txt'
-        test_set_file = txt_dir + test_data_set_type + '_' + util.buildP(testP, 'TE') + \
-                        '_' + c_name + '_' + snr_name_test + '.txt'
         cm_name = Model + '_' + c_name + '_' + util.buildP(P, 'TR') + '_TR' + util.buildSNR(snr) \
                   + '_' + util.buildP(testP, 'TE') + '_TE_' + snr_name_test + '_BS' + str(common_config_batch_size) \
                   + '_LR' + util.buildLR(lr)
-        print('Model name is', para)
-        print('Test filename', test_set_file)
-        print('CM Name', cm_name)
         # 第一步：数据加载与处理,选择训练设备cpu/gpu
         device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
         print("是否使用GPU加速：", torch.cuda.is_available())
-        # 为当前GPU/CPU设置随机种子(第三行是否必要存疑)
-        test_data = MyDataset(txt=test_set_file, type='test', device_count=device_count, shuffle=False,
-                              transform=transforms.Compose([transforms.CenterCrop(64), transforms.ToTensor()]))
-        print('the type of test_data is', type(test_data))
+
+        test_file = '/mnt/DiskA-1.7T/ztz/Output/DCTF_RFF/class/ClearedDataset-1-RawSlice/TE-P-1-2_A-no_' \
+                    + 'S-' + tmp_snr + '_L10-128.txt'
+        test_file_list = util.read_list_from_file(test_file)
+        print(test_file_list)
+        test_data = RawWiFiDataset(mat_file=test_file_list, shuffle=False)
+        test_data.print_dataset_info()
         test_loader = DataLoader(test_data, batch_size=batch_size, num_workers=8, shuffle=False, pin_memory=True)
-        print('创建DataLoader成功!')
         print('Parameters:', '\nDataType:', train_common, '\nBatchSize:', batch_size)
         test(para)
         print('epochs:', epochs, 'lr:', lr)

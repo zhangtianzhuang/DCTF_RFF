@@ -4,7 +4,7 @@ from torchvision import transforms
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
 import os
-from MyDataset import MyDataset
+from dataset import MyDataset
 import util
 from common_config import *
 from torchvision.datasets import cifar

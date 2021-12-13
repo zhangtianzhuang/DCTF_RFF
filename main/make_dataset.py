@@ -126,7 +126,6 @@ if __name__ == '__main__':
                 os.makedirs(target)
             if len(train_set) != 0:
                 train_set_file = data_set_type + '_' + util.buildP(P, 'TR') + '_' + c_name + '_' + snr_name
-
                 write_dataset_to_txt(train_set, target + '/' + train_set_file + '.txt')
                 print('训练集生成成功：file', target + '/' + train_set_file, 'Size:', len(train_set))
             if len(test_set) != 0:

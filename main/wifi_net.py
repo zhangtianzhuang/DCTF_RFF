@@ -187,24 +187,32 @@ class M5(nn.Module):
     def __init__(self):
         self.class_name = 'M5'
         super(M5, self).__init__()
-        self.conv = nn.Sequential(
+
+        self.conv1 = nn.Sequential(
             nn.Conv2d(in_channels=2, out_channels=128, kernel_size=(1, 7)),
             nn.Conv2d(in_channels=128, out_channels=128, kernel_size=(1, 5)),
-            nn.MaxPool2d(kernel_size=(1, 2), stride=(1, 2))
+            nn.MaxPool2d(kernel_size=(1, 7), stride=(1, 1))
         )
+
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(in_channels=128, out_channels=128, kernel_size=(1, 7)),
+            nn.Conv2d(in_channels=128, out_channels=128, kernel_size=(1, 5)),
+            nn.MaxPool2d(kernel_size=(1, 7), stride=(1, 1))
+        )
+
         self.fc1 = nn.Sequential(
-            nn.Linear(in_features=128 * 8, out_features=128)
+            nn.Linear(in_features=128 * 64, out_features=128)
         )
         self.fc2 = nn.Sequential(
-            nn.Linear(in_features=128, out_features=9)
+            nn.Linear(in_features=128, out_features=10)
         )
 
     def forward(self, input):
-        conv1_output = self.conv(input)
-        conv2_output = self.conv(conv1_output)
-        conv3_output = self.conv(conv2_output)
-        conv4_output = self.conv(conv3_output)
-        last_output = conv4_output.view(-1, 1 * 128 * 8)
+        conv1_output = self.conv1(input)
+        conv2_output = self.conv2(conv1_output)
+        conv3_output = self.conv2(conv2_output)
+        conv4_output = self.conv2(conv3_output)
+        last_output = conv4_output.view(-1, 1 * 128 * 64)
         fc1_output = self.fc1(last_output)
         fc2_output = self.fc2(fc1_output)
         return fc2_output
@@ -228,5 +236,4 @@ if __name__ == '__main__':
     # output_2 = conv_2(output)
     # print(output_2)
     # print(output_2.shape)
-    net = M5()
-    print(net)
+    pass

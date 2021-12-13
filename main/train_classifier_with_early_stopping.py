@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from torch.autograd import Variable
 from torch import optim
 import os
-from MyDataset import MyDataset
+from dataset import MyDataset
 import util
 import matplotlib.pyplot as plt
 from common_config import *
@@ -68,6 +68,7 @@ def train():
         train_total = 0
         for i, data in enumerate(train_loader, 0):
             inputs, train_labels = data
+            print('inputs shape:', inputs.shape)
             inputs, labels = Variable(inputs), Variable(train_labels)
             inputs, labels = inputs.cuda(), labels.cuda()
             optimizer.zero_grad()  # 将梯度初始化为零

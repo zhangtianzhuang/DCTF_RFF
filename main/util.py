@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import itertools
 import torchvision
-from WifiNet import M1, M2, M3, M4
+from wifi_net import M1, M2, M3, M4, M5
 import torch.nn as nn
 from resnet import ResNet18
 
@@ -104,6 +104,13 @@ def buildC(c):
     return 'C' + str(c)
 
 
+def build_aug(aug):
+    res = 'A'
+    for a in aug:
+        res = res + '-' + a
+    return res
+
+
 def buildLR(lr):
     s = str(lr)
     s = s.replace('.', '-')
@@ -145,9 +152,48 @@ def get_net(name, out_features=9):
         return net
     elif name == 'resnet18-custom':
         return ResNet18()
+    elif name == 'M5':
+        return M5()
+
+
+def get_file_name(dir_name: str, suffix: str):
+    file_list = os.listdir(dir_name)
+    res = list()
+    for item in file_list:
+        if item.endswith(suffix):
+            res.append(os.path.join(dir_name, item))
+    return res
+
+
+def write_dataset_to_txt(data, file_path):
+    with open(file_path, 'w+') as f:
+        for k in data.keys():
+            for i in data[k]:
+                f.write(i + ' ' + k + '\n')
+
+
+def write_list_to_file(data: list, file_path: str):
+    with open(file_path, 'w+') as f:
+        for line in data:
+            f.write(line + '\n')
+
+
+def read_list_from_file(file_path: str):
+    res = list()
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            res.append(line.replace('\n', ''))
+    return res
 
 
 if __name__ == '__main__':
     # test buildLR
-    s = buildLR(0.0001)
-    print(s)
+    # s = buildLR(0.0001)
+    # print(s)
+
+    # res = get_file_name('/home/bjtu/ztz/project/DCTF_RFF/main', '.py')
+    # print(res)
+    # print(len(res))
+    res = read_list_from_file('/mnt/DiskA-1.7T/ztz/Output/DCTF_RFF/class/ClearedDataset-1-RawSlice/TE-P-1-2_A-no_S-5-10-15-20-25-30-no_L10-128.txt')
+    print(res)
