@@ -7,54 +7,50 @@ from dataset import MyDataset, RawWiFiDataset
 import util
 from common_config import *
 import matplotlib.pyplot as plt
+from util import *
 
-Model = common_config_model  # net model
-epochs = 120
-lr = common_config_learning_rate  # learning rate
-# using the second GPU in the linux system, more info: command "gpustat"
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+# 环境
+# os.environ["CUDA_VISIBLE_DEVICES"] = "1"  # 指定（第2块）GPU
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
-net = util.get_net(Model)
-net = net.cuda()
-epochs_name = str(epochs)
-batch_size = common_config_batch_size
-device_count = common_config_device_count  # the number of devices
-print('epochs:', epochs, 'lr:', lr)
-print('net create success:', net)
-
-train_data_set_type = common_config_train_set
-test_data_set_type = common_config_test_set
-P = common_config_train_point
-testP = common_config_test_point
-snr = common_config_train_snr
-test_snr = common_config_test_snr
-snr_name_train = util.buildSNR(snr)
-snr_name_test = util.buildSNR(test_snr)
-c_name = util.buildC(device_count)
+# 网络参数
+net = util.get_net(common_config_model).to(device)
+batch_size, device_count = common_config_batch_size, common_config_device_count
+train_data_set_type, test_data_set_type = common_config_train_set, common_config_test_set
+train_point, test_point = common_config_train_point, common_config_test_point
+train_snr, test_snr = common_config_train_snr, common_config_test_snr
+# 结果
 result = list()
+# 模型的存储路径和文件名
+net_model_para = common_config_net_model_para
+model_dir = '{0}/model/{1}'.format(OUTPUT_DIR, train_data_set_type)
+model_filename = build_model_para_name_2(net_model_para)
+# 混淆矩阵的存储路径和文件名
+# OUTPUT_DIR + '/confuse_matrix/' + test_data_set_type
+confuse_matrix_dir = '{}/confuse_matrix/{}'.format(OUTPUT_DIR, train_data_set_type)
+confuse_matrix_filename = build_confuse_matrix_name(build_model_para_name_2(net_model_para),
+                                                    build_point(test_point), build_snr(test_snr))
 
 
 # test
-def test(para):
-    # loading the parameters of the net model
+def test():
+    # 1.加载训练后的网络模型
     with torch.no_grad():
-        path = OUTPUT_DIR + '/model/' + train_data_set_type + '/' + para
-        pretrained_dict = torch.load(path)['state_dict']
+        net_model = load_net_model_para(model_dir, model_filename)
     try:
-        net.load_state_dict(pretrained_dict)
+        net.load_state_dict(net_model)
     except IOError:
         raise IOError("net weights not found")
+    # 2.设置为训练模式，不会反向转播
     net.eval()
-    test_correct = 0
-    test_total = 0
+    test_correct, test_total = 0, 0
     confuse_matrix = np.zeros([device_count, device_count], dtype=np.int)
-    err_pos = []
+    err_pos = []  # 记录预测错误的详情，使用元组展示（样本位置，真实值，预测值）
     for i, data in enumerate(test_loader, 0):
         inputs, test_labels = data
         inputs = inputs.type(torch.FloatTensor)
         inputs, labels = Variable(inputs), Variable(test_labels)
-        inputs = inputs.cuda()
-        labels = labels.cuda()
+        inputs, labels = inputs.to(device), labels.to(device)
         outputs = net(inputs)
         _, test_predicted = torch.max(outputs.data, 1)
         for idx, val in enumerate(labels.data):
@@ -67,53 +63,32 @@ def test(para):
                 err_pos.append((i * batch_size + idx + 1, int(real_value) + 1,
                                 int(predicted_value + 1)))
         test_total += test_labels.size(0)
-        # print('batch', i)
     result.append(round(100. * test_correct / test_total, 4))
-    print('the number of err:', len(err_pos))
-    print(err_pos)
     print("test acc: %.4f" % (100. * test_correct / test_total))
     names = [
         'device-1', 'device-2', 'device-3', 'device-4', 'device-5', 'device-6', 'device-7',
         'device-8', 'device-9', 'device-10'
     ]
-    confuse_matrix_dir = OUTPUT_DIR + '/confuse_matrix/' + test_data_set_type
     util.plot_confusion_matrix(np.array(confuse_matrix), names[:device_count], dir_name=confuse_matrix_dir,
-                               file_name=cm_name)
-
-
-def build_para_name():
-    return Model + '_' + train_common + '_BS_' + str(common_config_batch_size) + '_LR' + util.buildLR(lr) + '.pth'
+                               file_name=confuse_matrix_filename)
 
 
 if __name__ == "__main__":
     for tmp_snr in common_config_train_snr:
-        snr_name_test = util.buildSNR([tmp_snr])
-        # config
-        train_common = train_data_set_type + '_' + util.buildP(P, 'TR') + '_' + c_name + '_' + snr_name_train
-        # 训练后的模型参数命名
-        para = build_para_name()
-        cm_name = Model + '_' + c_name + '_' + util.buildP(P, 'TR') + '_TR' + util.buildSNR(snr) \
-                  + '_' + util.buildP(testP, 'TE') + '_TE_' + snr_name_test + '_BS' + str(common_config_batch_size) \
-                  + '_LR' + util.buildLR(lr)
-        # 第一步：数据加载与处理,选择训练设备cpu/gpu
-        device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-        print("是否使用GPU加速：", torch.cuda.is_available())
-
-        test_file = '/mnt/DiskA-1.7T/ztz/Output/DCTF_RFF/class/ClearedDataset-1-RawSlice/TE-P-1-2_A-no_' \
-                    + 'S-' + tmp_snr + '_L10-128.txt'
+        # 加载测试集
+        test_file = build_dataset_file_2(get_test_parameter(), snr=tmp_snr)
         test_file_list = util.read_list_from_file(test_file)
-        print(test_file_list)
         test_data = RawWiFiDataset(mat_file=test_file_list, shuffle=False)
-        test_data.print_dataset_info()
-        test_loader = DataLoader(test_data, batch_size=batch_size, num_workers=8, shuffle=False, pin_memory=True)
-        print('Parameters:', '\nDataType:', train_common, '\nBatchSize:', batch_size)
-        test(para)
-        print('epochs:', epochs, 'lr:', lr)
+        test_loader = DataLoader(test_data, batch_size=batch_size, num_workers=2, shuffle=False, pin_memory=True)
+        # 测试
+        test()
     print(result)
-    plt.figure('Identification Accuracy')
-    x = [i for i in range(5, 40, 5)]
-    plt.xlabel('SNR(dB)')
-    plt.ylabel('Accuracy(%)')
-    plt.grid(True)
-    plt.plot(x, result, 'r-o')
-    plt.show()
+    # 使用折线图展示结果
+    if len(result) > 1:
+        plt.figure('Identification Accuracy')
+        x = [i for i in range(5, 40, 5)]
+        plt.xlabel('SNR(dB)')
+        plt.ylabel('Accuracy(%)')
+        plt.grid(True)
+        plt.plot(x, result, 'r-o')
+        plt.show()

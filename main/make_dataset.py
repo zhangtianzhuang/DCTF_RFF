@@ -83,15 +83,15 @@ if __name__ == '__main__':
     P: 数据的集合，可以添加不同地点的数据
     snr: 选择不同snr的数据
     """
-    data_set_type = DATASET_ClearedDataset_1  # 数据集
+    data_set_type = DATASET_ClearedDataset_20_ModelB_DS_S401_500  # 数据集
     root_dir = '/mnt/DiskA-1.7T/ztz/WIFI_Dataset/DCTF_Image/'
     devices = common_config_devices  # 设备
     device_count = common_config_device_count
-    data_type = 'train'  # 数据集类型，train or test
+    data_type = 'test'  # 数据集类型，train or test
     # 若True，将该文件的所有数据都判定为data_type定义数据集，
     # 若为False，则按照ratio分为训练集和测试集，默认4:1
-    is_all = False
-    P = ['P1']  # 选择哪些采样地点的数据
+    is_all = True
+    P = ['1']  # 选择哪些采样地点的数据
     SNRs = common_config_train_snr  # 选择包含哪些SNR的数据
     # SNRs = ['10', '15', '20', '25', '30', 'no']
     # SNRs = ['25']
@@ -102,12 +102,12 @@ if __name__ == '__main__':
         for tmpSNR in SNRs:
             data_result = []
             snr = [tmpSNR]
-            snr_name = util.buildSNR(snr)
-            c_name = util.buildC(device_count)
+            snr_name = util.build_snr(snr)
+            c_name = util.build_device_count(device_count)
             for s in snr:
                 dir_name = root_dir + data_set_type + '/snr_' + s
                 for k in P:
-                    dir_name2 = dir_name + '/' + k
+                    dir_name2 = dir_name + '/P' + k
                     for i in range(len(devices)):
                         res = get_img_filename(dir_name2 + '/' + str(devices[i]), str(i + 1))
                         data_result.append(res)
@@ -125,22 +125,22 @@ if __name__ == '__main__':
             if not os.path.exists(target):
                 os.makedirs(target)
             if len(train_set) != 0:
-                train_set_file = data_set_type + '_' + util.buildP(P, 'TR') + '_' + c_name + '_' + snr_name
+                train_set_file = data_set_type + '_' + util.build_point(P, 'TR') + '_' + c_name + '_' + snr_name
                 write_dataset_to_txt(train_set, target + '/' + train_set_file + '.txt')
                 print('训练集生成成功：file', target + '/' + train_set_file, 'Size:', len(train_set))
             if len(test_set) != 0:
-                test_set_file = data_set_type + '_' + util.buildP(P, 'TE') + '_' + c_name + '_' + snr_name
+                test_set_file = data_set_type + '_' + util.build_point(P, 'TE') + '_' + c_name + '_' + snr_name
                 write_dataset_to_txt(test_set, target + '/' + test_set_file + '.txt')
                 print('测试集生成成功：file', target + '/' + test_set_file, 'Size:', len(test_set))
     else:
         data_result = []
         snr = SNRs
-        snr_name = util.buildSNR(snr)
-        c_name = util.buildC(device_count)
+        snr_name = util.build_snr(snr)
+        c_name = util.build_device_count(device_count)
         for s in snr:
             dir_name = root_dir + data_set_type + '/snr_' + s
             for k in P:
-                dir_name2 = dir_name + '/' + k
+                dir_name2 = dir_name + '/P' + k
                 for i in range(len(devices)):
                     res = get_img_filename(dir_name2 + '/' + str(devices[i]), str(i + 1))
                     data_result.append(res)
@@ -158,10 +158,10 @@ if __name__ == '__main__':
         if not os.path.exists(target):
             os.makedirs(target)
         if len(train_set) != 0:
-            train_set_file = data_set_type + '_' + util.buildP(P, 'TR') + '_' + c_name + '_' + snr_name
+            train_set_file = data_set_type + '_' + util.build_point(P, 'TR') + '_' + c_name + '_' + snr_name
             write_dataset_to_txt(train_set, target + '/' + train_set_file + '.txt')
             print('训练集生成成功：file', target + '/' + train_set_file, 'Size:', len(train_set))
         if len(test_set) != 0:
-            test_set_file = data_set_type + '_' + util.buildP(P, 'TE') + '_' + c_name + '_' + snr_name
+            test_set_file = data_set_type + '_' + util.build_point(P, 'TE') + '_' + c_name + '_' + snr_name
             write_dataset_to_txt(test_set, target + '/' + test_set_file + '.txt')
             print('测试集生成成功：file', target + '/' + test_set_file, 'Size:', len(test_set))

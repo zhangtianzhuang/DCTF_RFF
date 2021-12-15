@@ -11,29 +11,31 @@ import matplotlib.pyplot as plt
 from common_config import *
 import random
 
-Model = common_config_model
+model = common_config_model
 max_epoch = 120
 lr = common_config_learning_rate
-net = util.get_net(Model)  # Training Model
+net = util.get_net(model)
 net = net.cuda()
 
 epochs_name = str(max_epoch)
-batch_size = common_config_batch_size
 
-print('epochs:', max_epoch, 'lr:', lr)
-print('net create success:', net)
-device_count = common_config_device_count
+# batch_size = common_config_batch_size
+# device_count = common_config_device_count
+# train_data_set_type = common_config_train_set
+# test_data_set_type = common_config_test_set
+# train_point = common_config_train_point
+# test_point = common_config_test_point
+# train_snr = common_config_train_snr
+# test_snr = common_config_test_snr
+batch_size, device_count = common_config_batch_size, common_config_device_count
+train_data_set_type, test_data_set_type = common_config_train_set, common_config_test_set
+train_point, test_point = common_config_train_point, common_config_test_point
+train_snr, test_snr = common_config_train_snr, common_config_test_snr
 
-train_data_set_type = common_config_train_set
-test_data_set_type = common_config_test_set
-P = common_config_train_point
-testP = common_config_test_point
-snr = common_config_train_snr
-test_snr = common_config_test_snr
-snr_name_train = util.buildSNR(snr)
-snr_name_test = util.buildSNR(test_snr)
-c_name = util.buildC(device_count)
-diff_channel = common_config_diff_channel
+snr_name_train = util.build_snr(train_snr)
+snr_name_test = util.build_snr(test_snr)
+
+c_name = util.build_device_count(device_count)
 
 
 def save_weights(epoch, filename):
@@ -68,7 +70,6 @@ def train():
         train_total = 0
         for i, data in enumerate(train_loader, 0):
             inputs, train_labels = data
-            print('inputs shape:', inputs.shape)
             inputs, labels = Variable(inputs), Variable(train_labels)
             inputs, labels = inputs.cuda(), labels.cuda()
             optimizer.zero_grad()  # 将梯度初始化为零
@@ -98,7 +99,6 @@ def train():
         test_correct = 0
         test_total = 0
         test_batch_number = len(test_loader)
-        # selected_batch_number = 32 if test_batch_number > 32 else test_batch_number
         selected_batch_number = test_batch_number
         start = random.randrange(0, test_batch_number-selected_batch_number+1)
         for i, data in enumerate(test_loader, start):
@@ -145,12 +145,12 @@ def train():
 
 
 def build_para_name():
-    return Model + '_' + train_common + '_BS_' + str(common_config_batch_size) + '_LR' + util.buildLR(lr) + '.pth'
+    return model + '_' + train_common + '_BS_' + str(common_config_batch_size) + '_LR' + util.build_learning_rate(lr) + '.pth'
 
 
 if __name__ == "__main__":
     # Config
-    train_common = train_data_set_type + '_' + util.buildP(P, 'TR') \
+    train_common = train_data_set_type + '_' + util.build_point(train_point, 'TR') \
                    + '_' + c_name + '_' + snr_name_train
     # 训练后的模型参数命名
     para = build_para_name()
@@ -158,40 +158,21 @@ if __name__ == "__main__":
     test_txt_dir = OUTPUT_DIR + '/class' + '/' + test_data_set_type + '/'
     train_set_file = train_txt_dir + train_common + '.txt'
     test_set_file = test_txt_dir + test_data_set_type + '_' \
-                    + util.buildP(testP, 'TE') + '_' + c_name + '_' \
+                    + util.build_point(test_point, 'TE') + '_' + c_name + '_' \
                     + snr_name_test + '.txt'
-    cm_name = Model + '_' + c_name + '_' + util.buildP(P, 'TR') + '_TR' + util.buildSNR(snr) \
-              + '_' + util.buildP(testP, 'TE') + '_TE' + util.buildSNR(test_snr) \
+    cm_name = model + '_' + c_name + '_' + util.build_point(train_point, 'TR') + '_TR' + util.build_snr(train_snr) \
+              + '_' + util.build_point(test_point, 'TE') + '_TE' + util.build_snr(test_snr) \
               + '_EP' + epochs_name \
-              + '_LR' + util.buildLR(lr)
-    print('Model name is', para)
+              + '_LR' + util.build_learning_rate(lr)
     print('Train filename', train_set_file)
     print('Test filename', test_set_file)
-    print('CM Name', cm_name)
-    # 第一步：数据加载与处理,选择训练设备cpu/gpu
-    device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-    print("是否使用GPU加速：", torch.cuda.is_available())
     train_data = MyDataset(txt=train_set_file, type='train', device_count=device_count,
                            transform=transforms.Compose([transforms.CenterCrop(64),
                                                          transforms.ToTensor()]))
-    # 此处的shuffle只是在一个小批次内进行打乱
     train_loader = DataLoader(train_data, batch_size=batch_size, num_workers=2, shuffle=True)
     test_data = MyDataset(txt=test_set_file, type='test', device_count=device_count, shuffle=True,
                           transform=transforms.Compose([transforms.CenterCrop(64),
                                                         transforms.ToTensor()]))
     test_loader = DataLoader(test_data, batch_size=batch_size, num_workers=2,
                              shuffle=False, pin_memory=True)
-    # transformer = transforms.Compose([transforms.CenterCrop(64), transforms.ToTensor()])
-    # dataset_dir = '/mnt/DiskA-1.7T/ztz/Output/DCTF_RFF/dataset/picdata'
-    # trainset = torchvision.datasets.CIFAR10(
-    #     root=dataset_dir, train=True, download=False, transform=transformer)
-    # train_loader = torch.utils.data.DataLoader(
-    #     trainset, batch_size=128, shuffle=True, num_workers=0)
-    #
-    # testset = torchvision.datasets.CIFAR10(
-    #     root=dataset_dir, train=False, download=True, transform=transformer)
-    # test_loader = torch.utils.data.DataLoader(
-    #     testset, batch_size=100, shuffle=True, num_workers=0)
-    print('create data_loader successfully!')
-    print('parameters:', '\ndata_type:', train_common, '\nbatch_size:', batch_size)
     train()

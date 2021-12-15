@@ -95,8 +95,8 @@ if __name__ == '__main__':
     first_diff_channel = '1'
     # snr = ['15', '20', '25', 'no']  # '10', '15', '20', '25', '30', '35'
     snr = ['no']
-    snr_name = util.buildSNR(snr)
-    c_name = util.buildC(device_count)
+    snr_name = util.build_snr(snr)
+    c_name = util.build_device_count(device_count)
 
     for s in snr:
         dir_name = root_dir + data_set_type + '/snr_' + s + '/Diff_' + first_diff_channel
@@ -118,10 +118,10 @@ if __name__ == '__main__':
     train_set, test_set = divide_dataset(data_set, get_ratio(is_all), data_type)
     target = './txt'
     if len(train_set) != 0:
-        train_set_file = data_set_type + '_' + util.buildP(P, 'TR') + '_' + c_name + '_' + snr_name
+        train_set_file = data_set_type + '_' + util.build_point(P, 'TR') + '_' + c_name + '_' + snr_name
         write_dataset_to_txt(train_set, target + '/' + train_set_file + '.txt')
         print('训练集生成成功：file', train_set_file, 'Size:', len(train_set))
     if len(test_set) != 0:
-        test_set_file = data_set_type + '_' + util.buildP(P, 'TE') + '_' + c_name + '_' + snr_name
+        test_set_file = data_set_type + '_' + util.build_point(P, 'TE') + '_' + c_name + '_' + snr_name
         write_dataset_to_txt(test_set, target + '/' + test_set_file + '.txt')
         print('测试集生成成功：file', test_set_file, 'Size:', len(test_set))

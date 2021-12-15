@@ -30,9 +30,9 @@ P = common_config_train_point
 testP = common_config_test_point
 snr = common_config_train_snr
 test_snr = common_config_test_snr
-snr_name_train = util.buildSNR(snr)
-snr_name_test = util.buildSNR(test_snr)
-c_name = util.buildC(device_count)
+snr_name_train = util.build_snr(snr)
+snr_name_test = util.build_snr(test_snr)
+c_name = util.build_device_count(device_count)
 result = list()
 
 
@@ -83,23 +83,23 @@ def test(para):
 
 
 def build_para_name():
-    return Model + '_' + train_common + '_BS_' + str(common_config_batch_size) + '_LR' + util.buildLR(lr) + '.pth'
+    return Model + '_' + train_common + '_BS_' + str(common_config_batch_size) + '_LR' + util.build_learning_rate(lr) + '.pth'
 
 
 if __name__ == "__main__":
     for tmp_snr in common_config_train_snr:
-        snr_name_test = util.buildSNR([tmp_snr])
+        snr_name_test = util.build_snr([tmp_snr])
         # config
-        train_common = train_data_set_type + '_' + util.buildP(P, 'TR') + '_' + c_name + '_' + snr_name_train
+        train_common = train_data_set_type + '_' + util.build_point(P, 'TR') + '_' + c_name + '_' + snr_name_train
         # 训练后的模型参数命名
         para = build_para_name()
         txt_dir = OUTPUT_DIR + '/class' + '/' + test_data_set_type + '/'
         train_set_file = txt_dir + train_common + '.txt'
-        test_set_file = txt_dir + test_data_set_type + '_' + util.buildP(testP, 'TE') + \
+        test_set_file = txt_dir + test_data_set_type + '_' + util.build_point(testP, 'TE') + \
                         '_' + c_name + '_' + snr_name_test + '.txt'
-        cm_name = Model + '_' + c_name + '_' + util.buildP(P, 'TR') + '_TR' + util.buildSNR(snr) \
-                  + '_' + util.buildP(testP, 'TE') + '_TE_' + snr_name_test + '_BS' + str(common_config_batch_size) \
-                  + '_LR' + util.buildLR(lr)
+        cm_name = Model + '_' + c_name + '_' + util.build_point(P, 'TR') + '_TR' + util.build_snr(snr) \
+                  + '_' + util.build_point(testP, 'TE') + '_TE_' + snr_name_test + '_BS' + str(common_config_batch_size) \
+                  + '_LR' + util.build_learning_rate(lr)
         print('Model name is', para)
         print('Test filename', test_set_file)
         print('CM Name', cm_name)

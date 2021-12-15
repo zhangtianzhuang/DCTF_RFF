@@ -1,1 +1,3 @@
 .idea
+./matlab/*.asv
+./matlab/other/*

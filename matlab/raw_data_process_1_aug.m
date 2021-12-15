@@ -6,8 +6,8 @@ dataSource = 'D:\WIFI_Dataset\AugData\ClearedDataset-1-RawSlice';
 devices = ["D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D10"];
 points = ["P1", "P2"];
 % 如果channelSeed = 0 表示信号不通过仿真信道
-channelSeedFrom = 0;
-channelSeedTo = 2;
+channelSeedFrom = 1;
+channelSeedTo = 1;
 for channelSeed = channelSeedFrom:channelSeedTo
     tgnChannel = wlanTGnChannel('RandomStream', 'mt19937ar with seed', ...
                 'Seed', channelSeed, 'DelayProfile', 'Model-B');

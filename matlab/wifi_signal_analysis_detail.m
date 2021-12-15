@@ -5,20 +5,20 @@ clear;
 %% 
 X1 = STS_LTS_Generator('LONG-F');
 X1 = transpose(X1);
+
 %% 
 IS_PLOT = 1;
 DiffInterval = 1;
 frame_header = 24;
-DataRoot = 'D:\WIFI_Dataset\AugData\P1WithLittle2TrainTest\P2\Model-B_C-21_Model-B_C-11_P2-1.mat';
+DataRoot = 'D:\WIFI_Dataset\AugData\ClearedDataset-1-RawSlice\PointAndDevice\P1_D1.mat';
 load(DataRoot);
-frame = 2;
+frame = 3;
 frame_label = Store_Frame_Label(frame);
-
-T = Store_Waveform(:, frame);
+T = Store_Waveform(frame, :);
 T = transpose(T); 
 T = T/sqrt(mean(abs(T).^2));
 
-if IS_PLOT == 1
+if IS_PLOT == 2
     figure; plot(abs(T)); title('All Data.');
 end
 T = T(frame_header:end);
@@ -46,7 +46,7 @@ end
 T2_1 = T2(33:96);
 T2_2 = T2(97:160);
 %% 
-if IS_PLOT == 1
+if IS_PLOT == 2
     figure;
     subplot(2,1,1);
     plot(abs(T2_1));

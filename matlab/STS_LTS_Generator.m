@@ -25,7 +25,7 @@ short_cp=short((1:16));
 short=short_cp;
 % 产生160个数据
 for f=1:9
-    short=[short,short_cp];
+    short=[short, short_cp];
 end
 short_str = short;
 % 长训练序列产生

@@ -5,7 +5,7 @@ close all;
 dataSource = 'D:\WIFI_Dataset\AugData\ClearedDataset-1-RawSlice';
 devices = ["D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D10"];
 points = ["P1", "P2"];
-seeds = ["Ano"];
+seeds = ["A1"];
 snrs = [5, 10, 15, 20, 25, 30 100];  % 100表示不添加噪声 %
 slice_size = 128;
 slice_number = 10;
